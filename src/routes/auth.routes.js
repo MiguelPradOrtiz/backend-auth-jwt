@@ -1,6 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
+const { sendResetEmail } = require('../services/email.service');
 const router = express.Router();
 
 router.post('/register', async (req, res) => {
@@ -37,5 +40,24 @@ router.post('/login', async (req, res) => {
     res.json({ message: 'Inicio de sesion correcto', token });
 
 });
+
+router.post('/reset-password', async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if(!user){
+        return res.status(404).json({ message: "Usuario no encontrado" })
+    }
+
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now()+3600000;
+    await user.save();
+
+    await sendResetEmail(user.email, resetToken);
+
+    res.status(200).json({message: "Email de restablecimiento enviado"});
+});
+
 
 module.exports = router;
