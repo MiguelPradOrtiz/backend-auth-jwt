@@ -28,4 +28,13 @@ router.put('/change-role/:id', authMiddleware, isAdmin, async (req, res) => {
     }
 });
 
+router.get('/users', authMiddleware, isAdmin, async (req, res) => {
+    try{
+        const users = await User.find({}, '-password');
+        res.json(users);
+    }catch(error){
+        res.status(500).json({ message: "Error al obtener los usuarios", error: error.message});
+    }
+});
+
 module.exports = router;
